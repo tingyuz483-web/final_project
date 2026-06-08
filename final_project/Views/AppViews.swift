@@ -1,13 +1,13 @@
 import PhotosUI
 import SwiftUI
+import UIKit
 
 struct AppRootView: View {
     @StateObject private var viewModel = AppViewModel()
 
     var body: some View {
         ZStack {
-            LinearGradient(colors: [Color(red: 0.98, green: 0.95, blue: 0.90), Color(red: 0.93, green: 0.82, blue: 0.70)], startPoint: .topLeading, endPoint: .bottomTrailing)
-                .ignoresSafeArea()
+            HanSceneBackdrop()
 
             if viewModel.currentUser == nil {
                 AuthFlowView()
@@ -25,8 +25,8 @@ struct AuthFlowView: View {
     @State private var mode: AuthMode = .login
     @State private var name = ""
     @State private var studentID = ""
-    @State private var email = ""
-    @State private var password = ""
+    @State private var email = "member@hanfu.com"
+    @State private var password = "Member1234!"
     @State private var message: String?
     @State private var isError = false
     @State private var forgotEmail = ""
@@ -43,11 +43,14 @@ struct AuthFlowView: View {
         ScrollView {
             VStack(spacing: 20) {
                 VStack(spacing: 8) {
-                    Image(systemName: "crown.fill")
+                    Image(systemName: "scroll.fill")
                         .font(.system(size: 42))
-                        .foregroundStyle(.brown)
-                    Text("漢服文化平台")
+                        .foregroundStyle(Color.hanCrimson)
+                        .padding(16)
+                        .background(Color.hanGold.opacity(0.18), in: Circle())
+                    Text("漢風雅集")
                         .font(.largeTitle.bold())
+                        .fontDesign(.serif)
                     Text("會員、活動、簽到、租借與社群整合系統")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -86,8 +89,12 @@ struct AuthFlowView: View {
                     .buttonStyle(PrimaryButtonStyle())
                 }
                 .padding()
-                .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-                .shadow(color: .black.opacity(0.08), radius: 18, x: 0, y: 8)
+                .background(Color.hanPaper.opacity(0.94), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .stroke(Color.hanGold.opacity(0.18), lineWidth: 1)
+                )
+                .shadow(color: Color.hanInk.opacity(0.08), radius: 18, x: 0, y: 8)
 
                 if let message {
                     Text(message)
@@ -139,13 +146,79 @@ struct LoginHintCard: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("測試帳號")
                 .font(.headline)
-            Text("管理員：admin@hanfu.com / Admin1234!")
-            Text("會員：member@hanfu.com / Member1234!")
+            AccountCredentialsRow(
+                title: "管理員",
+                email: "admin@hanfu.com",
+                password: "Admin1234!"
+            )
+            AccountCredentialsRow(
+                title: "會員",
+                email: "member@hanfu.com",
+                password: "Member1234!"
+            )
         }
         .font(.footnote)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
-        .background(.white.opacity(0.75), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .background(Color.hanPaper.opacity(0.82), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+}
+
+struct AccountCredentialsRow: View {
+    let title: String
+    let email: String
+    let password: String
+    @State private var copiedField: String?
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+
+            CopySnippet(label: "Email", value: email, copied: copiedField == "email") {
+                copy(value: email, field: "email")
+            }
+
+            CopySnippet(label: "密碼", value: password, copied: copiedField == "password") {
+                copy(value: password, field: "password")
+            }
+        }
+    }
+
+    private func copy(value: String, field: String) {
+        UIPasteboard.general.string = value
+        copiedField = field
+
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 1_200_000_000)
+            if copiedField == field {
+                copiedField = nil
+            }
+        }
+    }
+}
+
+struct CopySnippet: View {
+    let label: String
+    let value: String
+    let copied: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Text("\(label)：\(value)")
+                    .lineLimit(1)
+                Image(systemName: copied ? "checkmark.circle.fill" : "doc.on.doc")
+                    .font(.caption.weight(.semibold))
+            }
+            .foregroundStyle(copied ? Color.gray : Color.primary)
+            .padding(.vertical, 6)
+            .padding(.horizontal, 10)
+            .background(Color.white.opacity(0.35), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(label)，點擊複製")
     }
 }
 
@@ -171,7 +244,7 @@ struct RootTabView: View {
                     .tabItem { Label("管理員", systemImage: "gearshape.2.fill") }
             }
         }
-        .tint(.brown)
+        .tint(Color.hanCrimson)
     }
 }
 
@@ -217,6 +290,7 @@ struct HomeHeroCard: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("你好，\(userName)")
                 .font(.title.bold())
+                .fontDesign(.serif)
             Text("這是一個結合會員、活動、QR 簽到、漢服圖鑑、租借、社群與管理員功能的整合式平台。")
                 .foregroundStyle(.secondary)
         }
@@ -224,7 +298,11 @@ struct HomeHeroCard: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(.white.opacity(0.85))
+                .fill(Color.hanPaper.opacity(0.9))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .stroke(Color.hanGold.opacity(0.14), lineWidth: 1)
         )
     }
 }
@@ -250,7 +328,11 @@ struct StatsRow: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .background(Color.hanPaper.opacity(0.88), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .stroke(Color.hanGold.opacity(0.12), lineWidth: 1)
+                )
             }
         }
     }
@@ -264,11 +346,16 @@ struct SectionCard<Content: View>: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
                 .font(.headline)
+                .fontDesign(.serif)
             content
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
-        .background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .background(Color.hanPaper.opacity(0.9), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(Color.hanGold.opacity(0.14), lineWidth: 1)
+        )
     }
 }
 
@@ -289,10 +376,14 @@ struct EventListView: View {
                 }
             }
             .navigationTitle("活動管理")
+            .scrollContentBackground(.hidden)
+            .background(Color.clear)
             .sheet(item: $selectedEvent) { event in
                 EventDetailView(event: event)
                     .environmentObject(viewModel)
             }
+            .toolbarBackground(Color.hanPaper.opacity(0.96), for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
         }
     }
 }
@@ -307,7 +398,7 @@ struct EventRow: View {
                 case .success(let image):
                     image.resizable().scaledToFill()
                 default:
-                    ZStack { Color.brown.opacity(0.15); Image(systemName: "calendar") }
+                    ZStack { Color.hanCrimson.opacity(0.12); Image(systemName: "calendar") }
                 }
             }
             .frame(width: 84, height: 84)
@@ -320,7 +411,7 @@ struct EventRow: View {
                 Text(event.date.appShortString).font(.caption).foregroundStyle(.secondary)
                 Text("剩餘名額：\(event.remainingSlots)")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(event.remainingSlots > 0 ? .green : .red)
+                    .foregroundStyle(event.remainingSlots > 0 ? .green : Color.hanCrimson)
             }
         }
         .padding(.vertical, 4)
@@ -333,48 +424,76 @@ struct EventDetailView: View {
     let event: Event
     @State private var message: String?
 
+    private var currentEvent: Event {
+        viewModel.snapshot.events.first(where: { $0.eventID == event.eventID }) ?? event
+    }
+
+    private var isRegistered: Bool {
+        guard let userID = viewModel.currentUser?.uid else { return false }
+        return currentEvent.registeredUserIDs.contains(userID)
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    AsyncImage(url: URL(string: event.imageURL)) { phase in
+                    AsyncImage(url: URL(string: currentEvent.imageURL)) { phase in
                         switch phase {
                         case .success(let image):
                             image.resizable().scaledToFill()
                         default:
-                            RoundedRectangle(cornerRadius: 24).fill(.brown.opacity(0.2)).overlay(Image(systemName: "photo").font(.largeTitle))
+                            RoundedRectangle(cornerRadius: 24).fill(Color.hanCrimson.opacity(0.14)).overlay(Image(systemName: "photo").font(.largeTitle))
                         }
                     }
                     .frame(height: 240)
                     .clipped()
                     .cornerRadius(24)
 
-                    Text(event.title).font(.title.bold())
-                    Text(event.description)
-                    DetailLine(title: "活動日期", value: event.date.appShortString)
-                    DetailLine(title: "地點", value: event.location)
-                    DetailLine(title: "名額", value: "\(event.registeredUserIDs.count)/\(event.quota)")
+                    Text(currentEvent.title).font(.title.bold())
+                    Text(currentEvent.description)
+                    DetailLine(title: "活動日期", value: currentEvent.date.appShortString)
+                    DetailLine(title: "地點", value: currentEvent.location)
+                    DetailLine(title: "名額", value: "\(currentEvent.registeredUserIDs.count)/\(currentEvent.quota)")
 
-                    Button("活動報名") {
+                    Button {
+                        guard !isRegistered else { return }
                         Task { await register() }
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: isRegistered ? "checkmark.circle.fill" : "calendar.badge.plus")
+                            Text(isRegistered ? "已報名" : "活動報名")
+                        }
+                        .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(PrimaryButtonStyle())
+                    .padding()
+                    .background(isRegistered ? Color.gray.opacity(0.72) : Color.hanCrimson, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .foregroundStyle(.white)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .stroke(isRegistered ? Color.gray.opacity(0.35) : Color.hanGold.opacity(0.2), lineWidth: 1)
+                    )
+                    .disabled(isRegistered)
+                    .animation(.easeInOut(duration: 0.2), value: isRegistered)
 
                     if let message {
-                        Text(message).font(.footnote).foregroundStyle(.secondary)
+                        Text(message)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
                     }
                 }
                 .padding()
             }
             .navigationTitle("活動詳情")
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("關閉") { dismiss() } } }
+            .toolbarBackground(Color.hanPaper.opacity(0.96), for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
         }
     }
 
     private func register() async {
         do {
             _ = try await viewModel.registerForEvent(eventID: event.eventID)
-            message = "報名成功"
+            message = "活動已報名"
         } catch {
             message = error.localizedDescription
         }
@@ -399,8 +518,15 @@ struct HanfuCatalogView: View {
         NavigationStack {
             VStack(spacing: 12) {
                 TextField("搜尋名稱或介紹", text: $searchText)
-                    .textFieldStyle(.roundedBorder)
+                    .textFieldStyle(.plain)
+                    .padding()
+                    .background(Color.hanPaper.opacity(0.86), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(Color.hanGold.opacity(0.12), lineWidth: 1)
+                    )
                     .padding(.horizontal)
+                    .padding(.top, 8)
 
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack {
@@ -422,10 +548,14 @@ struct HanfuCatalogView: View {
                 }
             }
             .navigationTitle("漢服圖鑑")
+            .scrollContentBackground(.hidden)
+            .background(Color.clear)
             .sheet(item: $selectedHanfu) { item in
                 HanfuDetailView(hanfu: item)
                     .environmentObject(viewModel)
             }
+            .toolbarBackground(Color.hanPaper.opacity(0.96), for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
         }
     }
 }
@@ -438,7 +568,7 @@ struct HanfuRow: View {
             AsyncImage(url: URL(string: hanfu.imageURL)) { phase in
                 switch phase {
                 case .success(let image): image.resizable().scaledToFill()
-                default: RoundedRectangle(cornerRadius: 16).fill(.brown.opacity(0.15)).overlay(Image(systemName: "photo"))
+                default: RoundedRectangle(cornerRadius: 16).fill(Color.hanCrimson.opacity(0.14)).overlay(Image(systemName: "photo"))
                 }
             }
             .frame(width: 84, height: 84)
@@ -465,7 +595,7 @@ struct HanfuDetailView: View {
                     AsyncImage(url: URL(string: hanfu.imageURL)) { phase in
                         switch phase {
                         case .success(let image): image.resizable().scaledToFill()
-                        default: RoundedRectangle(cornerRadius: 24).fill(.brown.opacity(0.2)).overlay(Image(systemName: "photo"))
+                        default: RoundedRectangle(cornerRadius: 24).fill(Color.hanCrimson.opacity(0.14)).overlay(Image(systemName: "photo"))
                         }
                     }
                     .frame(height: 280)
@@ -542,7 +672,7 @@ struct CostumeRow: View {
             AsyncImage(url: URL(string: costume.imageURL)) { phase in
                 switch phase {
                 case .success(let image): image.resizable().scaledToFill()
-                default: RoundedRectangle(cornerRadius: 16).fill(.brown.opacity(0.15)).overlay(Image(systemName: "hanger"))
+                default: RoundedRectangle(cornerRadius: 16).fill(Color.hanCrimson.opacity(0.14)).overlay(Image(systemName: "hanger"))
                 }
             }
             .frame(width: 84, height: 84)
@@ -568,50 +698,51 @@ struct CostumeDetailView: View {
     @Environment(\.dismiss) private var dismiss
     let costume: Costume
     @Binding var message: String?
-    @State private var isBorrowed: Bool
 
-    init(costume: Costume, message: Binding<String?>) {
-        self.costume = costume
-        self._message = message
-        self._isBorrowed = State(initialValue: !costume.available)
+    private var currentCostume: Costume {
+        viewModel.snapshot.costumes.first(where: { $0.costumeID == costume.costumeID }) ?? costume
+    }
+
+    private var isBorrowed: Bool {
+        !currentCostume.available
     }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    AsyncImage(url: URL(string: costume.imageURL)) { phase in
+                    AsyncImage(url: URL(string: currentCostume.imageURL)) { phase in
                         switch phase {
                         case .success(let image): image.resizable().scaledToFill()
-                        default: RoundedRectangle(cornerRadius: 24).fill(.brown.opacity(0.2)).overlay(Image(systemName: "hanger"))
+                        default: RoundedRectangle(cornerRadius: 24).fill(Color.hanCrimson.opacity(0.14)).overlay(Image(systemName: "hanger"))
                         }
                     }
                     .frame(height: 280)
                     .clipped()
                     .cornerRadius(24)
 
-                    Text(costume.name).font(.title.bold())
-                    DetailLine(title: "尺寸", value: costume.size)
-                    DetailLine(title: "朝代", value: costume.dynasty.rawValue)
-                    DetailLine(title: "狀態", value: isBorrowed ? "借用申請已送出" : (costume.available ? "可借用" : "已借出"))
+                    Text(currentCostume.name).font(.title.bold())
+                    DetailLine(title: "尺寸", value: currentCostume.size)
+                    DetailLine(title: "朝代", value: currentCostume.dynasty.rawValue)
+                    DetailLine(title: "狀態", value: isBorrowed ? "已被借用" : "可借用")
 
                     Button {
                         Task { await borrow() }
                     } label: {
                         HStack(spacing: 10) {
                             Image(systemName: isBorrowed ? "checkmark.circle.fill" : "arrow.up.circle.fill")
-                            Text(isBorrowed ? "已申請借用" : "借用申請")
+                            Text(isBorrowed ? "已被借用" : "借用申請")
                         }
                         .frame(maxWidth: .infinity)
                     }
                     .padding()
-                    .background(isBorrowed ? Color.gray.opacity(0.35) : Color.brown, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .background(isBorrowed ? Color.gray.opacity(0.35) : Color.hanCrimson, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                     .foregroundStyle(isBorrowed ? Color.primary : Color.white)
                     .overlay(
                         RoundedRectangle(cornerRadius: 18, style: .continuous)
                             .stroke(isBorrowed ? Color.gray.opacity(0.45) : Color.clear, lineWidth: 1)
                     )
-                    .disabled(isBorrowed || !costume.available)
+                    .disabled(isBorrowed)
 
                     Text("歸還會在會員中心的借閱紀錄中處理。")
                         .font(.footnote)
@@ -626,9 +757,8 @@ struct CostumeDetailView: View {
 
     private func borrow() async {
         do {
-            _ = try await viewModel.borrowCostume(costumeID: costume.costumeID)
-            isBorrowed = true
-            message = "借用成功"
+            _ = try await viewModel.borrowCostume(costumeID: currentCostume.costumeID)
+            message = "已被借用"
         } catch {
             message = error.localizedDescription
         }
@@ -656,6 +786,8 @@ struct SocialFeedView: View {
                 .padding()
             }
             .navigationTitle("社群分享")
+            .toolbarBackground(Color.hanPaper.opacity(0.96), for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
         }
         .onChange(of: selectedPhoto) { _, newItem in
             Task { await loadImage(from: newItem) }
@@ -669,7 +801,7 @@ struct SocialFeedView: View {
             TextEditor(text: $content)
                 .frame(minHeight: 100)
                 .padding(8)
-                .background(Color.white.opacity(0.8), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .background(Color.hanPaper.opacity(0.86), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
 
             PhotosPicker(selection: $selectedPhoto, matching: .images) {
                 Label("上傳圖片", systemImage: "photo.on.rectangle.angled")
@@ -687,14 +819,18 @@ struct SocialFeedView: View {
             .buttonStyle(PrimaryButtonStyle())
         }
         .padding()
-        .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .background(Color.hanPaper.opacity(0.94), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(Color.hanGold.opacity(0.14), lineWidth: 1)
+        )
     }
 
     @ViewBuilder
     private func postCard(_ post: Post) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Circle().fill(.brown.opacity(0.3)).frame(width: 40, height: 40)
+                Circle().fill(Color.hanCrimson.opacity(0.22)).frame(width: 40, height: 40)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(authorName(for: post.userID)).font(.headline)
                     Text(post.createdAt.appShortString).font(.caption).foregroundStyle(.secondary)
@@ -710,7 +846,7 @@ struct SocialFeedView: View {
                     case .success(let image):
                         image.resizable().scaledToFill()
                     default:
-                        RoundedRectangle(cornerRadius: 18).fill(.brown.opacity(0.15))
+                        RoundedRectangle(cornerRadius: 18).fill(Color.hanCrimson.opacity(0.14))
                     }
                 }
                 .frame(height: 220)
@@ -734,11 +870,11 @@ struct SocialFeedView: View {
                         .padding(.vertical, 10)
                         .padding(.horizontal, 14)
                         .frame(minWidth: 92)
-                        .background(isLiked ? Color.brown : Color.white, in: Capsule())
+                        .background(isLiked ? Color.hanCrimson : Color.hanPaper, in: Capsule())
                         .foregroundStyle(isLiked ? .white : .primary)
                         .overlay(
                             Capsule()
-                                .stroke(Color.brown.opacity(isLiked ? 0 : 0.35), lineWidth: 1)
+                                .stroke(Color.hanCrimson.opacity(isLiked ? 0 : 0.28), lineWidth: 1)
                         )
                 }
 
@@ -761,7 +897,13 @@ struct SocialFeedView: View {
                     get: { commentDrafts[post.postID, default: ""] },
                     set: { commentDrafts[post.postID] = $0 }
                 ))
-                .textFieldStyle(.roundedBorder)
+                .textFieldStyle(.plain)
+                .padding()
+                .background(Color.hanPaper.opacity(0.86), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(Color.hanGold.opacity(0.12), lineWidth: 1)
+                )
 
                 Button("送出") {
                     Task { await sendComment(for: post) }
@@ -769,7 +911,11 @@ struct SocialFeedView: View {
             }
         }
         .padding()
-        .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .background(Color.hanPaper.opacity(0.94), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(Color.hanGold.opacity(0.14), lineWidth: 1)
+        )
     }
 
     private func authorName(for userID: String) -> String {
@@ -850,6 +996,8 @@ struct MemberCenterView: View {
             }
             .navigationTitle("會員中心")
             .onAppear(perform: loadProfile)
+            .toolbarBackground(Color.hanPaper.opacity(0.96), for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
         }
     }
 
@@ -857,13 +1005,18 @@ struct MemberCenterView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(viewModel.currentUser?.name ?? "")
                 .font(.title.bold())
+                .fontDesign(.serif)
             DetailLine(title: "Email", value: viewModel.currentUser?.email ?? "")
             DetailLine(title: "學號", value: viewModel.currentUser?.studentID ?? "")
             DetailLine(title: "身份", value: viewModel.currentUser?.role.displayName ?? "")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
-        .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .background(Color.hanPaper.opacity(0.94), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(Color.hanGold.opacity(0.14), lineWidth: 1)
+        )
     }
 
     private var editableProfileCard: some View {
@@ -881,7 +1034,11 @@ struct MemberCenterView: View {
             }
         }
         .padding()
-        .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .background(Color.hanPaper.opacity(0.94), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(Color.hanGold.opacity(0.14), lineWidth: 1)
+        )
     }
 
     private func loadProfile() {
@@ -906,7 +1063,11 @@ struct MemberCenterView: View {
             content()
         }
         .padding()
-        .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .background(Color.hanPaper.opacity(0.94), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(Color.hanGold.opacity(0.14), lineWidth: 1)
+        )
     }
 
     private func eventCompactRow(event: Event) -> some View {
@@ -970,60 +1131,142 @@ struct AdminCenterView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                Section("新增公告") {
-                    StyledInputField(title: "公告標題", text: $announcementTitle)
-                    TextEditor(text: $announcementContent)
-                        .frame(minHeight: 100)
-                    Button("新增公告") { Task { await createAnnouncement() } }
-                }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    adminOverview
 
-                Section("新增活動") {
-                    StyledInputField(title: "活動名稱", text: $eventTitle)
-                    TextEditor(text: $eventDescription)
-                        .frame(minHeight: 100)
-                    StyledInputField(title: "地點", text: $eventLocation)
-                    StyledInputField(title: "名額", text: $eventQuota, keyboardType: .numberPad)
-                    StyledInputField(title: "圖片 URL", text: $eventImageURL)
-                    Button("建立活動") { Task { await createEvent() } }
-                }
+                    adminSection(title: "內容發布") {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("新增公告")
+                                .font(.headline)
+                            StyledInputField(title: "公告標題", text: $announcementTitle)
+                            TextEditor(text: $announcementContent)
+                                .frame(minHeight: 100)
+                                .padding(8)
+                                .background(Color.hanPaper.opacity(0.86), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            Button("新增公告") { Task { await createAnnouncement() } }
+                                .buttonStyle(PrimaryButtonStyle())
+                        }
 
-                Section("管理公告") {
-                    ForEach(viewModel.snapshot.announcements) { item in
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(item.title).font(.headline)
-                            Text(item.content).font(.subheadline)
-                            HStack {
-                                Button("刪除") { Task { await deleteAnnouncement(id: item.announcementID) } }
-                                Spacer()
+                        Divider().opacity(0.2)
+
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("新增活動")
+                                .font(.headline)
+                            StyledInputField(title: "活動名稱", text: $eventTitle)
+                            TextEditor(text: $eventDescription)
+                                .frame(minHeight: 100)
+                                .padding(8)
+                                .background(Color.hanPaper.opacity(0.86), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            StyledInputField(title: "地點", text: $eventLocation)
+                            StyledInputField(title: "名額", text: $eventQuota, keyboardType: .numberPad)
+                            StyledInputField(title: "圖片 URL", text: $eventImageURL)
+                            Button("建立活動") { Task { await createEvent() } }
+                                .buttonStyle(PrimaryButtonStyle())
+                        }
+                    }
+
+                    adminSection(title: "管理公告") {
+                        VStack(alignment: .leading, spacing: 12) {
+                            ForEach(viewModel.snapshot.announcements) { item in
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text(item.title)
+                                        .font(.headline)
+                                    Text(item.content)
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                    HStack {
+                                        Spacer()
+                                        Button("刪除") { Task { await deleteAnnouncement(id: item.announcementID) } }
+                                            .font(.caption.weight(.semibold))
+                                    }
+                                }
+                                .padding()
+                                .background(Color.hanPaper.opacity(0.82), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            }
+                        }
+                    }
+
+                    adminSection(title: "管理會員") {
+                        VStack(alignment: .leading, spacing: 12) {
+                            ForEach(viewModel.snapshot.users) { user in
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(user.name)
+                                            .font(.subheadline.weight(.semibold))
+                                        Text(user.email)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    Spacer()
+                                    Text(user.role.displayName)
+                                        .font(.caption.weight(.semibold))
+                                }
+                                .padding()
+                                .background(Color.hanPaper.opacity(0.82), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                             }
                         }
                     }
                 }
-
-                Section("管理會員") {
-                    ForEach(viewModel.snapshot.users) { user in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(user.name)
-                                Text(user.email).font(.caption).foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            Text(user.role.displayName).font(.caption)
-                        }
-                    }
-                }
+                .padding()
             }
             .navigationTitle("管理員功能")
+            .scrollContentBackground(.hidden)
+            .background(Color.clear)
             .overlay(alignment: .bottom) {
                 if let message {
                     Text(message)
                         .padding()
                         .frame(maxWidth: .infinity)
-                        .background(.thinMaterial)
+                        .background(Color.hanPaper.opacity(0.88))
+                        .foregroundStyle(.secondary)
                 }
             }
+            .toolbarBackground(Color.hanPaper.opacity(0.96), for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
         }
+    }
+
+    private var adminOverview: some View {
+        HStack(spacing: 12) {
+            adminStat(title: "公告", value: "\(viewModel.snapshot.announcements.count)")
+            adminStat(title: "活動", value: "\(viewModel.snapshot.events.count)")
+            adminStat(title: "會員", value: "\(viewModel.snapshot.users.count)")
+        }
+    }
+
+    private func adminStat(title: String, value: String) -> some View {
+        VStack(spacing: 6) {
+            Text(value)
+                .font(.title2.bold())
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(Color.hanPaper.opacity(0.9), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(Color.hanGold.opacity(0.14), lineWidth: 1)
+        )
+    }
+
+    @ViewBuilder
+    private func adminSection<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.headline)
+                .fontDesign(.serif)
+            content()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(Color.hanPaper.opacity(0.94), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(Color.hanGold.opacity(0.14), lineWidth: 1)
+        )
     }
 
     private func createAnnouncement() async {
@@ -1086,7 +1329,7 @@ struct FilterChip: View {
                 .font(.subheadline.weight(.semibold))
                 .padding(.vertical, 8)
                 .padding(.horizontal, 14)
-                .background(isSelected ? Color.brown : Color.white.opacity(0.75), in: Capsule())
+                .background(isSelected ? Color.hanCrimson : Color.hanPaper.opacity(0.82), in: Capsule())
                 .foregroundStyle(isSelected ? .white : .primary)
         }
     }
@@ -1097,8 +1340,12 @@ struct PrimaryButtonStyle: ButtonStyle {
         configuration.label
             .font(.headline)
             .padding()
-            .background(Color.brown.opacity(configuration.isPressed ? 0.75 : 1.0), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .background(Color.hanCrimson.opacity(configuration.isPressed ? 0.82 : 1.0), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             .foregroundStyle(.white)
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(Color.hanGold.opacity(configuration.isPressed ? 0.08 : 0.2), lineWidth: 1)
+            )
             .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
     }
 }
@@ -1114,7 +1361,11 @@ struct StyledInputField: View {
             .textInputAutocapitalization(.never)
             .autocorrectionDisabled()
             .padding()
-            .background(.white.opacity(0.8), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .background(Color.hanPaper.opacity(0.86), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(Color.hanGold.opacity(0.12), lineWidth: 1)
+            )
     }
 }
 
@@ -1125,8 +1376,60 @@ struct StyledSecureField: View {
     var body: some View {
         SecureField(title, text: $text)
             .padding()
-            .background(.white.opacity(0.8), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .background(Color.hanPaper.opacity(0.86), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(Color.hanGold.opacity(0.12), lineWidth: 1)
+            )
     }
+}
+
+struct HanSceneBackdrop: View {
+    var body: some View {
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color.hanPaper,
+                    Color(red: 0.95, green: 0.89, blue: 0.80),
+                    Color(red: 0.88, green: 0.74, blue: 0.62)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+
+            RadialGradient(
+                colors: [
+                    Color.hanGold.opacity(0.24),
+                    Color.clear
+                ],
+                center: .topTrailing,
+                startRadius: 10,
+                endRadius: 420
+            )
+            .blendMode(.softLight)
+
+            Circle()
+                .fill(Color.hanCrimson.opacity(0.12))
+                .frame(width: 260, height: 260)
+                .blur(radius: 28)
+                .offset(x: -140, y: -260)
+
+            Circle()
+                .fill(Color.hanInk.opacity(0.10))
+                .frame(width: 320, height: 320)
+                .blur(radius: 34)
+                .offset(x: 160, y: 320)
+        }
+        .ignoresSafeArea()
+    }
+}
+
+extension Color {
+    static let hanPaper = Color(red: 0.98, green: 0.95, blue: 0.90)
+    static let hanPaperDeep = Color(red: 0.94, green: 0.88, blue: 0.78)
+    static let hanCrimson = Color(red: 0.57, green: 0.12, blue: 0.12)
+    static let hanInk = Color(red: 0.20, green: 0.16, blue: 0.13)
+    static let hanGold = Color(red: 0.76, green: 0.58, blue: 0.24)
 }
 
 #Preview {

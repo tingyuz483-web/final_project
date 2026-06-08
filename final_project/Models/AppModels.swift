@@ -162,8 +162,8 @@ struct AppSnapshot: Codable {
         ]
 
         let posts = [
-            Post(postID: UUID().uuidString, userID: user.uid, content: "今天試穿了唐風襦裙，質感很好。", imageURL: "https://picsum.photos/700/500?post=1", likes: 12, likedByUserIDs: [admin.uid, "user-002"], createdAt: Date().addingTimeInterval(-3600 * 3)),
-            Post(postID: UUID().uuidString, userID: admin.uid, content: "社團新公告：本週五有漢服講座。", imageURL: nil, likes: 5, likedByUserIDs: [user.uid], createdAt: Date().addingTimeInterval(-3600 * 8))
+            Post(postID: UUID().uuidString, userID: user.uid, content: "今天試穿了唐風襦裙，質感很好。", imageURL: "https://picsum.photos/700/500?post=1", likes: 2, likedByUserIDs: [admin.uid, "user-002"], createdAt: Date().addingTimeInterval(-3600 * 3)),
+            Post(postID: UUID().uuidString, userID: admin.uid, content: "社團新公告：本週五有漢服講座。", imageURL: nil, likes: 1, likedByUserIDs: [user.uid], createdAt: Date().addingTimeInterval(-3600 * 8))
         ]
 
         let comments = [
