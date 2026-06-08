@@ -1,21 +1,21 @@
-//
-//  ContentView.swift
-//  final_project
-//
-//  Created by tingyu  on 2026/6/8.
-//
-
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var viewModel = AppViewModel()
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        ZStack {
+            LinearGradient(colors: [Color(red: 0.98, green: 0.95, blue: 0.90), Color(red: 0.93, green: 0.82, blue: 0.70)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                .ignoresSafeArea()
+
+            if viewModel.currentUser == nil {
+                AuthFlowView()
+                    .environmentObject(viewModel)
+            } else {
+                RootTabView()
+                    .environmentObject(viewModel)
+            }
         }
-        .padding()
     }
 }
 
