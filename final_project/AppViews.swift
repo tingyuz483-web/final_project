@@ -48,10 +48,10 @@ struct AuthFlowView: View {
                         .foregroundStyle(Color.hanCrimson)
                         .padding(16)
                         .background(Color.hanGold.opacity(0.18), in: Circle())
-                    Text("漢風雅集")
+                    Text("iClude")
                         .font(.largeTitle.bold())
                         .fontDesign(.serif)
-                    Text("會員、活動、簽到、租借與社群整合系統")
+                    Text("中原大學漢服研究社")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -175,11 +175,11 @@ struct AccountCredentialsRow: View {
             Text(title)
                 .font(.subheadline.weight(.semibold))
 
-            CopySnippet(label: "Email", value: email, copied: copiedField == "email") {
+            CopySnippet(label: "", value: email, copied: copiedField == "email") {
                 copy(value: email, field: "email")
             }
 
-            CopySnippet(label: "密碼", value: password, copied: copiedField == "password") {
+            CopySnippet(label: "", value: password, copied: copiedField == "password") {
                 copy(value: password, field: "password")
             }
         }
@@ -207,7 +207,7 @@ struct CopySnippet: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 4) {
-                Text("\(label)：\(value)")
+                Text(displayText)
                     .lineLimit(1)
                 Image(systemName: copied ? "checkmark.circle.fill" : "doc.on.doc")
                     .font(.caption.weight(.semibold))
@@ -219,6 +219,10 @@ struct CopySnippet: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(label)，點擊複製")
+    }
+
+    private var displayText: String {
+        label.isEmpty ? value : "\(label)：\(value)"
     }
 }
 
@@ -259,8 +263,8 @@ struct HomeView: View {
 
                     StatsRow(
                         items: [
+                            .init(title: "可借用漢服", value: "\(availableCostumes.count)"),
                             .init(title: "活動", value: "\(viewModel.snapshot.events.count)"),
-                            .init(title: "漢服", value: "\(viewModel.snapshot.hanfus.count)"),
                             .init(title: "貼文", value: "\(viewModel.snapshot.posts.count)")
                         ]
                     )
@@ -279,7 +283,12 @@ struct HomeView: View {
                 .padding()
             }
             .navigationTitle("首頁")
+            .hanfuNavigationHeader()
         }
+    }
+
+    private var availableCostumes: [Costume] {
+        viewModel.snapshot.costumes.filter { $0.available }
     }
 }
 
@@ -291,7 +300,7 @@ struct HomeHeroCard: View {
             Text("你好，\(userName)")
                 .font(.title.bold())
                 .fontDesign(.serif)
-            Text("這是一個結合會員、活動、QR 簽到、漢服圖鑑、租借、社群與管理員功能的整合式平台。")
+            Text("快速查看可借用漢服、活動與貼文，直接進入你要的內容。")
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -366,13 +375,32 @@ struct EventListView: View {
     var body: some View {
         NavigationStack {
             List {
-                ForEach(viewModel.snapshot.events) { event in
-                    Button {
-                        selectedEvent = event
-                    } label: {
-                        EventRow(event: event)
+                Section("所有活動") {
+                    ForEach(viewModel.snapshot.events) { event in
+                        Button {
+                            selectedEvent = event
+                        } label: {
+                            EventRow(event: event)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
+                }
+                
+                Section("已報名活動") {
+                    if registeredEvents.isEmpty {
+                        Text("尚未報名任何活動")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(registeredEvents) { event in
+                            Button {
+                                selectedEvent = event
+                            } label: {
+                                registeredEventRow(event)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
                 }
             }
             .navigationTitle("活動管理")
@@ -382,9 +410,27 @@ struct EventListView: View {
                 EventDetailView(event: event)
                     .environmentObject(viewModel)
             }
-            .toolbarBackground(Color.hanPaper.opacity(0.96), for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
+            .hanfuNavigationHeader()
         }
+    }
+
+    private var registeredEvents: [Event] {
+        viewModel.registeredEvents
+    }
+
+    private func registeredEventRow(_ event: Event) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(event.title)
+                .font(.headline)
+            Text(event.date.appShortString)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Text("剩餘名額：\(event.remainingSlots)")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(event.remainingSlots > 0 ? .green : Color.hanCrimson)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 4)
     }
 }
 
@@ -485,8 +531,7 @@ struct EventDetailView: View {
             }
             .navigationTitle("活動詳情")
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("關閉") { dismiss() } } }
-            .toolbarBackground(Color.hanPaper.opacity(0.96), for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
+            .hanfuNavigationHeader()
         }
     }
 
@@ -554,8 +599,7 @@ struct HanfuCatalogView: View {
                 HanfuDetailView(hanfu: item)
                     .environmentObject(viewModel)
             }
-            .toolbarBackground(Color.hanPaper.opacity(0.96), for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
+            .hanfuNavigationHeader()
         }
     }
 }
@@ -609,6 +653,7 @@ struct HanfuDetailView: View {
                 .padding()
             }
             .navigationTitle("詳情")
+            .hanfuNavigationHeader()
         }
     }
 }
@@ -639,6 +684,21 @@ struct CostumeRentalView: View {
                             Text("借用日期：\(rental.rentDate.appShortString)")
                             Text(rental.returned ? "已歸還" : "借用中")
                                 .foregroundStyle(rental.returned ? .green : .orange)
+
+                            if !rental.returned {
+                                Button("歸還") {
+                                    Task { await returnRental(rentalID: rental.rentalID) }
+                                }
+                                .font(.caption.weight(.semibold))
+                                .padding(.vertical, 6)
+                                .padding(.horizontal, 14)
+                                .background(Color.hanCrimson, in: Capsule())
+                                .foregroundStyle(.white)
+                                .overlay(
+                                    Capsule()
+                                        .stroke(Color.hanCrimson.opacity(0.25), lineWidth: 1)
+                                )
+                            }
                         }
                     }
                 }
@@ -656,11 +716,21 @@ struct CostumeRentalView: View {
                         .background(.thinMaterial)
                 }
             }
+            .hanfuNavigationHeader()
         }
     }
 
     private func costumeName(for costumeID: String) -> String {
         viewModel.snapshot.costumes.first(where: { $0.costumeID == costumeID })?.name ?? "未知漢服"
+    }
+
+    private func returnRental(rentalID: String) async {
+        do {
+            _ = try await viewModel.returnCostume(rentalID: rentalID)
+            message = "已完成歸還"
+        } catch {
+            message = error.localizedDescription
+        }
     }
 }
 
@@ -731,7 +801,7 @@ struct CostumeDetailView: View {
                     } label: {
                         HStack(spacing: 10) {
                             Image(systemName: isBorrowed ? "checkmark.circle.fill" : "arrow.up.circle.fill")
-                            Text(isBorrowed ? "已被借用" : "借用申請")
+                    Text(isBorrowed ? "已被借用" : "借用申請")
                         }
                         .frame(maxWidth: .infinity)
                     }
@@ -744,7 +814,7 @@ struct CostumeDetailView: View {
                     )
                     .disabled(isBorrowed)
 
-                    Text("歸還會在會員中心的借閱紀錄中處理。")
+                    Text("歸還會在租借頁的借閱紀錄中處理。")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
@@ -752,6 +822,7 @@ struct CostumeDetailView: View {
             }
             .navigationTitle("借用詳情")
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("關閉") { dismiss() } } }
+            .hanfuNavigationHeader()
         }
     }
 
@@ -786,8 +857,7 @@ struct SocialFeedView: View {
                 .padding()
             }
             .navigationTitle("社群分享")
-            .toolbarBackground(Color.hanPaper.opacity(0.96), for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
+            .hanfuNavigationHeader()
         }
         .onChange(of: selectedPhoto) { _, newItem in
             Task { await loadImage(from: newItem) }
@@ -996,8 +1066,7 @@ struct MemberCenterView: View {
             }
             .navigationTitle("會員中心")
             .onAppear(perform: loadProfile)
-            .toolbarBackground(Color.hanPaper.opacity(0.96), for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
+            .hanfuNavigationHeader()
         }
     }
 
@@ -1082,12 +1151,6 @@ struct MemberCenterView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(costumeName(for: rental.costumeID)).font(.subheadline.bold())
             Text(rental.returned ? "已歸還" : "借用中").font(.caption).foregroundStyle(rental.returned ? .green : .orange)
-            if !rental.returned {
-                Button("歸還") {
-                    Task { await returnRental(rentalID: rental.rentalID) }
-                }
-                .font(.caption)
-            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -1098,15 +1161,6 @@ struct MemberCenterView: View {
             Text(post.createdAt.appShortString).font(.caption).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private func returnRental(rentalID: String) async {
-        do {
-            _ = try await viewModel.returnCostume(rentalID: rentalID)
-            message = "已完成歸還"
-        } catch {
-            message = error.localizedDescription
-        }
     }
 
     private func eventTitle(for eventID: String) -> String {
@@ -1179,6 +1233,14 @@ struct AdminCenterView: View {
                                         Spacer()
                                         Button("刪除") { Task { await deleteAnnouncement(id: item.announcementID) } }
                                             .font(.caption.weight(.semibold))
+                                            .padding(.vertical, 6)
+                                            .padding(.horizontal, 14)
+                                            .background(Color.hanCrimson, in: Capsule())
+                                            .foregroundStyle(.white)
+                                            .overlay(
+                                                Capsule()
+                                                    .stroke(Color.hanCrimson.opacity(0.25), lineWidth: 1)
+                                            )
                                     }
                                 }
                                 .padding()
@@ -1222,8 +1284,7 @@ struct AdminCenterView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            .toolbarBackground(Color.hanPaper.opacity(0.96), for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
+            .hanfuNavigationHeader()
         }
     }
 
@@ -1421,6 +1482,15 @@ struct HanSceneBackdrop: View {
                 .offset(x: 160, y: 320)
         }
         .ignoresSafeArea()
+    }
+}
+
+private extension View {
+    func hanfuNavigationHeader() -> some View {
+        toolbarBackground(Color.hanPaper.opacity(0.96), for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(.light, for: .navigationBar)
+            .tint(Color.hanInk)
     }
 }
 
