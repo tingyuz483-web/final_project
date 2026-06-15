@@ -48,7 +48,7 @@ struct AuthFlowView: View {
                         .foregroundStyle(Color.hanCrimson)
                         .padding(16)
                         .background(Color.hanGold.opacity(0.18), in: Circle())
-                    Text("iClude")
+                    Text("iClub")
                         .font(.largeTitle.bold())
                         .fontDesign(.serif)
                     Text("中原大學漢服研究社")
@@ -300,7 +300,7 @@ struct HomeHeroCard: View {
             Text("你好，\(userName)")
                 .font(.title.bold())
                 .fontDesign(.serif)
-            Text("快速查看可借用漢服、活動與貼文，直接進入你要的內容。")
+            Text("這是一個結合會員、活動、漢服圖鑑、租借、社群與管理員功能的整合系統。")
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -677,7 +677,7 @@ struct CostumeRentalView: View {
                     }
                 }
 
-                Section("借閱紀錄") {
+                Section("借用紀錄") {
                     ForEach(viewModel.myRentals) { rental in
                         VStack(alignment: .leading, spacing: 6) {
                             Text(costumeName(for: rental.costumeID)).font(.headline)
@@ -814,7 +814,7 @@ struct CostumeDetailView: View {
                     )
                     .disabled(isBorrowed)
 
-                    Text("歸還會在租借頁的借閱紀錄中處理。")
+                    Text("歸還會在租借頁的借用紀錄中處理。")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
@@ -1215,7 +1215,7 @@ struct AdminCenterView: View {
                             StyledInputField(title: "地點", text: $eventLocation)
                             StyledInputField(title: "名額", text: $eventQuota, keyboardType: .numberPad)
                             StyledInputField(title: "圖片 URL", text: $eventImageURL)
-                            Button("建立活動") { Task { await createEvent() } }
+                            Button("新增活動") { Task { await createEvent() } }
                                 .buttonStyle(PrimaryButtonStyle())
                         }
                     }
