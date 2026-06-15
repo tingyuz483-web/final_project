@@ -248,7 +248,7 @@ struct RootTabView: View {
                     .tabItem { Label("管理員", systemImage: "gearshape.2.fill") }
             }
         }
-        .tint(Color.hanCrimson)
+        .tint(Color.hanInk)
     }
 }
 
@@ -1447,40 +1447,7 @@ struct StyledSecureField: View {
 
 struct HanSceneBackdrop: View {
     var body: some View {
-        ZStack {
-            LinearGradient(
-                colors: [
-                    Color.hanPaper,
-                    Color(red: 0.95, green: 0.89, blue: 0.80),
-                    Color(red: 0.88, green: 0.74, blue: 0.62)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-
-            RadialGradient(
-                colors: [
-                    Color.hanGold.opacity(0.24),
-                    Color.clear
-                ],
-                center: .topTrailing,
-                startRadius: 10,
-                endRadius: 420
-            )
-            .blendMode(.softLight)
-
-            Circle()
-                .fill(Color.hanCrimson.opacity(0.12))
-                .frame(width: 260, height: 260)
-                .blur(radius: 28)
-                .offset(x: -140, y: -260)
-
-            Circle()
-                .fill(Color.hanInk.opacity(0.10))
-                .frame(width: 320, height: 320)
-                .blur(radius: 34)
-                .offset(x: 160, y: 320)
-        }
+        Color.hanPaperDeep
         .ignoresSafeArea()
     }
 }
@@ -1490,7 +1457,7 @@ private extension View {
         toolbarBackground(Color.hanPaper.opacity(0.96), for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.light, for: .navigationBar)
-            .tint(Color.hanInk)
+            .tint(Color.black)
     }
 }
 
